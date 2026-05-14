@@ -2,6 +2,8 @@ import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from '../../services/store';
 import { fetchIngredients } from '../../services/features/ingredient';
 import { useEffect } from 'react';
+import { getCookie } from '../../utils/cookie';
+import { fetchUser } from '../../services/features/user';
 import {
   ConstructorPage,
   Feed,
@@ -131,12 +133,18 @@ const AppRoutes = () => {
 
 const App = () => {
   const dispatch = useDispatch();
-
   const { ingredients, isLoading, error } = useSelector(
     (state) => state.ingredients
   );
+
   useEffect(() => {
     dispatch(fetchIngredients());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (getCookie('accessToken')) {
+      dispatch(fetchUser());
+    }
   }, [dispatch]);
 
   return (
