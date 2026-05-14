@@ -1,30 +1,159 @@
-import { ConstructorPage } from '@pages';
-import '../../index.css';
-import styles from './app.module.css';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from '../../services/store';
+import { fetchIngredients } from '../../services/features/ingredient';
+import { useEffect } from 'react';
+import {
+  ConstructorPage,
+  Feed,
+  Login,
+  Register,
+  ForgotPassword,
+  ResetPassword,
+  Profile,
+  ProfileOrders,
+  NotFound404
+} from '@pages';
 
-import { AppHeader } from '@components';
+import { ModalUI } from '@ui';
+import { OrderInfo, IngredientDetails } from '@components';
+import { AppHeader, ProtectedRoute } from '@components';
 import { Preloader } from '@ui';
 
+import styles from './app.module.css';
+
+const AppRoutes = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const background = location.state?.background;
+  const handleClose = () => {
+    navigate(-1);
+  };
+  return (
+    <>
+      <Routes location={background || location}>
+        <Route path='/' element={<ConstructorPage />} />
+        <Route path='/feed' element={<Feed />} />
+
+        {/* Только для неавторизованных */}
+        <Route
+          path='/login'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Login />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/register'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Register />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/forgot-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/reset-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ResetPassword />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Защищённые маршруты */}
+        <Route
+          path='/profile'
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/profile/orders'
+          element={
+            <ProtectedRoute>
+              <ProfileOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path='*' element={<NotFound404 />} />
+      </Routes>
+
+      {background && (
+        <Routes>
+          {/* Модалка заказа в ленте */}
+          <Route
+            path='/feed/:number'
+            element={
+              <ModalUI title='Информация о заказе' onClose={handleClose}>
+                <OrderInfo />
+              </ModalUI>
+            }
+          />
+
+          {/* Модалка ингредиента */}
+          <Route
+            path='/ingredients/:id'
+            element={
+              <ModalUI title='Детали ингредиента' onClose={handleClose}>
+                <IngredientDetails />
+              </ModalUI>
+            }
+          />
+
+          {/* Защищённая модалка заказа в профиле */}
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <ProtectedRoute>
+                <ModalUI title='Детали заказа' onClose={handleClose}>
+                  <OrderInfo />
+                </ModalUI>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      )}
+    </>
+  );
+};
+
 const App = () => {
-  /** TODO: взять переменные из стора */
-  const isIngredientsLoading = false;
-  const ingredients = [];
-  const error = null;
+  const dispatch = useDispatch();
+
+  const { ingredients, isLoading, error } = useSelector(
+    (state) => state.ingredients
+  );
+  useEffect(() => {
+    dispatch(fetchIngredients());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
-      {isIngredientsLoading ? (
+
+      {isLoading ? (
         <Preloader />
       ) : error ? (
         <div className={`${styles.error} text text_type_main-medium pt-4`}>
           {error}
         </div>
       ) : ingredients.length > 0 ? (
-        <ConstructorPage />
+        <AppRoutes />
       ) : (
         <div className={`${styles.title} text text_type_main-medium pt-4`}>
-          Нет игредиентов
+          Нет ингредиентов
         </div>
       )}
     </div>
