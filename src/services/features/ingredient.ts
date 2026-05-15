@@ -11,11 +11,11 @@ interface IngredientsState {
 
 const initialState: IngredientsState = {
   ingredients: [],
-  isLoading: true,
+  isLoading: false,
   error: null
 };
 
-export const fetchIngredients = createAsyncThunk<TIngredient[]>(
+export const fetchIngredients = createAsyncThunk<TIngredient[], void>(
   'ingredients/fetchIngredients',
   async () => getIngredientsApi()
 );
@@ -36,7 +36,7 @@ export const ingredientSlice = createSlice({
       })
       .addCase(fetchIngredients.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'Ошибка загрузки ингредиентов';
       });
   }
 });
@@ -46,4 +46,4 @@ export const selectIngredients = (state: RootState) =>
   state.ingredients.ingredients;
 export const isIngredientLoading = (state: RootState) =>
   state.ingredients.isLoading;
-export const ingredientError = (state: any) => state.ingredients.error;
+export const ingredientError = (state: RootState) => state.ingredients.error;

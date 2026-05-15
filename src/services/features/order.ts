@@ -1,6 +1,7 @@
 import {
   getOrderByNumberApi,
   getOrdersApi,
+  getFeedsApi,
   orderBurgerApi,
   TNewOrderResponse,
   TNewOrder
@@ -20,16 +21,24 @@ interface OrdersState {
 
 const initialState: OrdersState = {
   order: [],
-  isLoading: true,
+  isLoading: false,
   error: null,
   currentOrder: null,
   orderRequest: false,
   orderModalData: null
 };
 
-export const fetchOrders = createAsyncThunk<TOrder[]>(
+export const fetchOrders = createAsyncThunk<TOrder[], void>(
   'order/getOrders',
   async () => getOrdersApi()
+);
+
+export const fetchPublicFeed = createAsyncThunk<TOrder[], void>(
+  'order/fetchPublicFeed',
+  async () => {
+    const data = await getFeedsApi();
+    return data.orders;
+  }
 );
 
 export const createOrder = createAsyncThunk<TNewOrderResponse, string[]>(
@@ -41,11 +50,9 @@ export const fetchOrderByNumber = createAsyncThunk<TOrder, number>(
   'order/fetchOrderByNumber',
   async (number) => {
     const data = await getOrderByNumberApi(number);
-
     if (!data.success || !data.orders.length) {
       throw new Error('Заказ не найден');
     }
-
     return data.orders[0];
   }
 );
@@ -60,36 +67,49 @@ export const orderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Публичная лента (/feed)
+      .addCase(fetchPublicFeed.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchPublicFeed.fulfilled, (state, action) => {
+        state.order = action.payload;
+        state.isLoading = false;
+      })
+      .addCase(fetchPublicFeed.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message ?? 'Ошибка загрузки ленты';
+      })
+
+      // Приватные заказы (/profile/orders)
       .addCase(fetchOrders.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.order = action.payload;
         state.isLoading = false;
       })
-
       .addCase(fetchOrders.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message ?? 'Error';
-      });
+        state.error = action.error.message ?? 'Ошибка загрузки заказов';
+      })
 
-    builder
+      // Создание заказа
       .addCase(createOrder.pending, (state) => {
         state.orderRequest = true;
         state.error = null;
       })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.orderRequest = false;
-        state.orderModalData = action.payload.order; // или используй TNewOrder
+        state.orderModalData = action.payload.order;
       })
       .addCase(createOrder.rejected, (state, action) => {
-        state.error = action.error.message ?? 'Error';
         state.orderRequest = false;
-      });
+        state.error = action.error.message ?? 'Ошибка создания заказа';
+      })
 
-    builder
+      // Заказ по номеру
       .addCase(fetchOrderByNumber.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -101,7 +121,7 @@ export const orderSlice = createSlice({
       })
       .addCase(fetchOrderByNumber.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'Ошибка загрузки заказа';
       });
   }
 });
@@ -115,3 +135,4 @@ export const selectOrderData = (state: RootState) => state.order.order;
 export const { clearOrderModal } = orderSlice.actions;
 export const selectCurrentOrder = (state: RootState) =>
   state.order.currentOrder;
+export const selectOrderLoading = (state: RootState) => state.order.isLoading;

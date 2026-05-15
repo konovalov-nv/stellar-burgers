@@ -22,68 +22,51 @@ interface UserState {
 const initialState: UserState = {
   user: null,
   isAuth: false,
-  isLoading: true,
+  isLoading: false,
   error: undefined
 };
 
-export const fetchUser = createAsyncThunk(
+export const fetchUser = createAsyncThunk<TUser, void>(
   'user/getUser',
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await getUserApi();
-
-      return res.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
+  async () => {
+    const res = await getUserApi();
+    return res.user;
   }
 );
 
-export const login = createAsyncThunk(
+export const login = createAsyncThunk<TUser, TLoginData>(
   'user/login',
-  async (data: TLoginData, { rejectWithValue }) => {
-    try {
-      const res = await loginUserApi(data);
-
-      localStorage.setItem('refreshToken', res.refreshToken);
-      setCookie('accessToken', res.accessToken);
-
-      return res.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
+  async (data) => {
+    const res = await loginUserApi(data);
+    localStorage.setItem('refreshToken', res.refreshToken);
+    setCookie('accessToken', res.accessToken);
+    return res.user;
   }
 );
 
-export const register = createAsyncThunk(
+export const register = createAsyncThunk<TUser, TRegisterData>(
   'user/register',
-  async (data: TRegisterData, { rejectWithValue }) => {
-    try {
-      const res = await registerUserApi(data);
-
-      localStorage.setItem('refreshToken', res.refreshToken);
-      setCookie('accessToken', res.accessToken);
-
-      return res.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
+  async (data) => {
+    const res = await registerUserApi(data);
+    localStorage.setItem('refreshToken', res.refreshToken);
+    setCookie('accessToken', res.accessToken);
+    return res.user;
   }
 );
 
-export const logout = createAsyncThunk('user/logout', async () => {
+export const logout = createAsyncThunk<void, void>('user/logout', async () => {
   await logoutApi();
   localStorage.removeItem('refreshToken');
   deleteCookie('accessToken');
 });
 
-export const updateUser = createAsyncThunk(
-  'user/update',
-  async (data: { name?: string; email?: string; password?: string }) => {
-    const responce = await updateUserApi(data);
-    return responce.user;
-  }
-);
+export const updateUser = createAsyncThunk<
+  TUser,
+  { name?: string; email?: string; password?: string }
+>('user/update', async (data) => {
+  const response = await updateUserApi(data);
+  return response.user;
+});
 
 export const userSlice = createSlice({
   name: 'user',

@@ -15,8 +15,7 @@ import {
   ProfileOrders,
   NotFound404
 } from '@pages';
-
-import { ModalUI } from '@ui';
+import { Modal } from '@components';
 import { OrderInfo, IngredientDetails } from '@components';
 import { AppHeader, ProtectedRoute } from '@components';
 import { Preloader } from '@ui';
@@ -89,6 +88,18 @@ const AppRoutes = () => {
           }
         />
 
+        {/* Маршруты для прямых переходов к деталям */}
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route
+          path='/profile/orders/:number'
+          element={
+            <ProtectedRoute>
+              <OrderInfo />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path='*' element={<NotFound404 />} />
       </Routes>
 
@@ -98,9 +109,9 @@ const AppRoutes = () => {
           <Route
             path='/feed/:number'
             element={
-              <ModalUI title='Информация о заказе' onClose={handleClose}>
+              <Modal title='Информация о заказе' onClose={handleClose}>
                 <OrderInfo />
-              </ModalUI>
+              </Modal>
             }
           />
 
@@ -108,9 +119,9 @@ const AppRoutes = () => {
           <Route
             path='/ingredients/:id'
             element={
-              <ModalUI title='Детали ингредиента' onClose={handleClose}>
+              <Modal title='Детали ингредиента' onClose={handleClose}>
                 <IngredientDetails />
-              </ModalUI>
+              </Modal>
             }
           />
 
@@ -119,9 +130,9 @@ const AppRoutes = () => {
             path='/profile/orders/:number'
             element={
               <ProtectedRoute>
-                <ModalUI title='Детали заказа' onClose={handleClose}>
+                <Modal title='Детали заказа' onClose={handleClose}>
                   <OrderInfo />
-                </ModalUI>
+                </Modal>
               </ProtectedRoute>
             }
           />

@@ -11,7 +11,7 @@ interface FeedState {
 
 const initialState: FeedState = {
   data: null,
-  isLoading: true,
+  isLoading: false,
   error: null
 };
 

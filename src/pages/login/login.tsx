@@ -3,11 +3,14 @@ import { LoginUI } from '@ui-pages';
 
 import { useDispatch, useSelector } from '../../services/store';
 import { login } from '../../services/features/user';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export const Login: FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +23,7 @@ export const Login: FC = () => {
     dispatch(login({ email, password }))
       .unwrap()
       .then(() => {
-        navigate('/', { replace: true });
+        navigate(from, { replace: true });
       })
       .catch((err) => {
         console.error('Ошибка входа:', err);
