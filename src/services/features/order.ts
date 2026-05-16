@@ -12,6 +12,8 @@ import { RootState } from '../store';
 
 interface OrdersState {
   order: TOrder[];
+  total: number;
+  totalToday: number;
   isLoading: boolean;
   error: string | null;
   currentOrder: TOrder | null;
@@ -21,6 +23,8 @@ interface OrdersState {
 
 const initialState: OrdersState = {
   order: [],
+  total: 0,
+  totalToday: 0,
   isLoading: false,
   error: null,
   currentOrder: null,
@@ -33,13 +37,17 @@ export const fetchOrders = createAsyncThunk<TOrder[], void>(
   async () => getOrdersApi()
 );
 
-export const fetchPublicFeed = createAsyncThunk<TOrder[], void>(
-  'order/fetchPublicFeed',
-  async () => {
-    const data = await getFeedsApi();
-    return data.orders;
-  }
-);
+export const fetchPublicFeed = createAsyncThunk<
+  { orders: TOrder[]; total: number; totalToday: number },
+  void
+>('order/fetchPublicFeed', async () => {
+  const data = await getFeedsApi(); // { orders, total, totalToday, success }
+  return {
+    orders: data.orders,
+    total: data.total,
+    totalToday: data.totalToday
+  };
+});
 
 export const createOrder = createAsyncThunk<TNewOrderResponse, string[]>(
   'order/createOrder',
@@ -73,7 +81,9 @@ export const orderSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPublicFeed.fulfilled, (state, action) => {
-        state.order = action.payload;
+        state.order = action.payload.orders;
+        state.total = action.payload.total; // ✅ Сохраняем
+        state.totalToday = action.payload.totalToday; // ✅ Сохраняем
         state.isLoading = false;
       })
       .addCase(fetchPublicFeed.rejected, (state, action) => {
