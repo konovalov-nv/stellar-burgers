@@ -2,7 +2,7 @@ import { FC, SyntheticEvent, useState } from 'react';
 import { LoginUI } from '@ui-pages';
 
 import { useDispatch, useSelector } from '../../services/store';
-import { login } from '../../services/features/user';
+import { login } from '../../services/features/user/user';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export const Login: FC = () => {

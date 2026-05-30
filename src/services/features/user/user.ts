@@ -9,8 +9,8 @@ import {
 } from '@api';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { TUser } from '@utils-types';
-import { RootState } from '../store';
-import { deleteCookie, setCookie } from '../../utils/cookie';
+import { RootState } from '../../store';
+import { deleteCookie, setCookie } from '../../../utils/cookie';
 
 interface UserState {
   user: TUser | null;

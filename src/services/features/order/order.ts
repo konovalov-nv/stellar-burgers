@@ -8,7 +8,7 @@ import {
 } from '@api';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { TOrder } from '@utils-types';
-import { RootState } from '../store';
+import { RootState } from '../../store';
 
 interface OrdersState {
   order: TOrder[];
@@ -82,8 +82,8 @@ export const orderSlice = createSlice({
       })
       .addCase(fetchPublicFeed.fulfilled, (state, action) => {
         state.order = action.payload.orders;
-        state.total = action.payload.total; // ✅ Сохраняем
-        state.totalToday = action.payload.totalToday; // ✅ Сохраняем
+        state.total = action.payload.total;
+        state.totalToday = action.payload.totalToday;
         state.isLoading = false;
       })
       .addCase(fetchPublicFeed.rejected, (state, action) => {

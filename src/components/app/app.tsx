@@ -1,9 +1,9 @@
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from '../../services/store';
-import { fetchIngredients } from '../../services/features/ingredient';
+import { fetchIngredients } from '../../services/features/ingredient/ingredient';
 import { useEffect } from 'react';
 import { getCookie } from '../../utils/cookie';
-import { fetchUser } from '../../services/features/user';
+import { fetchUser } from '../../services/features/user/user';
 import {
   ConstructorPage,
   Feed,

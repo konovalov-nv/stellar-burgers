@@ -7,7 +7,7 @@ import {
   fetchPublicFeed,
   selectOrderData,
   selectOrderLoading
-} from '../../services/features/order';
+} from '../../services/features/order/order';
 
 export const Feed: FC = () => {
   const dispatch = useDispatch();

@@ -4,7 +4,7 @@ import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
 import { useDispatch, useSelector } from '../../services/store';
-import { fetchOrderByNumber } from '../../services/features/order';
+import { fetchOrderByNumber } from '../../services/features/order/order';
 
 export const OrderInfo: FC = () => {
   const dispatch = useDispatch();

@@ -4,8 +4,8 @@ import { BurgerConstructorUI } from '@ui';
 import { useNavigate } from 'react-router-dom'; // 🔥 Для редиректа
 
 import { useDispatch, useSelector } from '../../services/store';
-import { createOrder } from '../../services/features/order';
-import { clearOrderModal } from '../../services/features/order';
+import { createOrder } from '../../services/features/order/order';
+import { clearOrderModal } from '../../services/features/order/order';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
