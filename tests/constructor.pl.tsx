@@ -51,7 +51,7 @@ test.describe('Burger Constructor', () => {
     });
 
     await page.goto('http://localhost:4000');
-    await expect(page.locator('text=Краторная булка').first()).toBeVisible({ timeout: 10000 });  // ✅ Ждём загрузки контента
+    await expect(page.locator('text=Краторная булка').first()).toBeVisible({ timeout: 10000 });
   });
 
   test.afterEach(async ({ page, context }) => {
