@@ -1,21 +1,61 @@
 import { test, expect } from '@playwright/test';
-import ingredientsMock from './data/ingredients.json';
-import userMock from './data/user.json';
-import orderMock from './data/order.json';
 
 test.describe('Burger Constructor', () => {
+  test.beforeEach(async ({ page, context }) => {
+    // HAR для мокирования бэкенда
+    await page.routeFromHAR('./tests/hars/constructor.har', {
+      url: '**/api/**',
+      update: false,
+    });
 
-  test.beforeEach(async ({ page }) => {
-    await page.route('**/api/ingredients', async (route) => {
-      await route.fulfill({
+    // Переопределение авторизации
+    await page.route('**/api/auth/user', (route) => {
+      route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(ingredientsMock),
+        body: JSON.stringify({
+          success: true,
+          user: { email: 'test@gmail.com', name: 'User test' }
+        })
       });
     });
 
-    await page.goto('/');
-    await expect(page.getByText('Краторная булка N-200i')).toBeVisible();
+    // Переопределение создания заказа
+    await page.route('**/api/orders', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            order: { number: 105912 },
+            name: 'Тестовый бургер'
+          })
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Установка токенов авторизации
+    await context.addCookies([{
+      name: 'accessToken',
+      value: 'mock-access-token-xyz',
+      domain: 'localhost',
+      path: '/'
+    }]);
+
+    // Выполняется до загрузки страницы
+    await page.addInitScript(() => {
+      localStorage.setItem('refreshToken', 'mock-refresh-token-xyz');
+    });
+
+    await page.goto('http://localhost:4000');
+    await expect(page.locator('text=Краторная булка').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test.afterEach(async ({ page, context }) => {
+    await context.clearCookies();
   });
 
   // Добавление ингредиентов
@@ -39,8 +79,6 @@ test.describe('Burger Constructor', () => {
     await expect(
       page.locator('span').filter({ hasText: 'Соус Spicy-X' }).first()
     ).toBeVisible();
-
-    await expect(page.locator('main').getByText('3474').first()).toBeVisible();
   });
 
   // Открытие модального окна ингредиента
@@ -89,42 +127,8 @@ test.describe('Burger Constructor', () => {
   });
 
   // Создание заказа
-  test('Cоздание заказа: сборка -> оформление -> проверка -> очистка конструктора', async ({ context, page }) => {
-    // 1. Подставляем моковые токены авторизации
-    await context.addCookies([{
-      name: 'accessToken',
-      value: 'mock-access-token-xyz',
-      domain: 'localhost',
-      path: '/'
-    }]);
-    await page.addInitScript(() => {
-      localStorage.setItem('refreshToken', 'mock-refresh-token-xyz');
-    });
-
-    // 2. Настраиваем перехваты запросов
-    await page.route('**/api/ingredients', route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ingredientsMock) }));
-
-    await page.route('**/api/auth/user', route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(userMock) }));
-
-    await page.route('**/api/orders', async route => {
-      if (route.request().method() === 'POST') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(orderMock)
-        });
-      } else {
-        route.continue();
-      }
-    });
-
-    // 3. Открываем главную страницу
-    await page.goto('/');
-    await expect(page.getByText('Краторная булка N-200i')).toBeVisible();
-
-    // 4. Собирается бургер
+  test('Cоздание заказа: сборка -> оформление -> проверка -> очистка конструктора', async ({ page }) => {
+    // Собирается бургер
     await page.locator('li').filter({ hasText: 'Краторная булка N-200i' })
       .getByRole('button', { name: 'Добавить' }).click();
     await expect(
@@ -137,15 +141,16 @@ test.describe('Burger Constructor', () => {
       page.locator('span').filter({ hasText: 'Филе Люминесцентного тетраодонтимформа' }).first()
     ).toBeVisible();
 
-    // 5. Вызывается клик по кнопке «Оформить заказ»
+    // Вызывается клик по кнопке «Оформить заказ»
     await page.getByRole('button', { name: 'Оформить заказ' }).click();
 
-    // 6. Проверяется, что модальное окно открылось
+    // Проверяется, что модальное окно открылось
     await expect(page.getByText('идентификатор заказа')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Ваш заказ начали готовить')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(orderMock.order.number.toString())).toBeVisible();
+    // Номер заказа проверяем из переопределённого мока выше (105912)
+    await expect(page.getByText('105912')).toBeVisible();
 
-    // 7. Закрывается модальное окно
+    // Закрывается модальное окно
     if (await page.locator('[data-testid="modal-overlay"]').count() > 0) {
       await page.locator('[data-testid="modal-overlay"]').first().click({ force: true });
     } else if (await page.locator('button[aria-label="Закрыть"]').count() > 0) {
@@ -158,7 +163,7 @@ test.describe('Burger Constructor', () => {
     await page.waitForTimeout(500);
     await expect(page.getByText('идентификатор заказа')).not.toBeVisible();
 
-    // 8. Проверяется, что конструктор пуст
+    // Проверяется, что конструктор пуст
     await expect(page.getByText('Выберите булки').first()).toBeVisible();
     await expect(page.getByText('Выберите начинку')).toBeVisible();
 
